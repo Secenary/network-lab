@@ -70,7 +70,28 @@ uint8_t ip_prefix_match(uint8_t *ipa, uint8_t *ipb) {
  * @return uint16_t 校验和
  */
 uint16_t checksum16(uint16_t *data, size_t len) {
-    // TO-DO
+    uint32_t sum = 0;
+
+    // len单位是字节，校验时以16位为单位，所以要除以2
+    // 这里假设len是字节长度，所以len/2是16位数的数量
+    size_t count = len / 2;
+
+    for (size_t i = 0; i < count; i++) {
+        sum += swap16(data[i]);
+    }
+
+    // 如果长度是奇数，需要把最后一个字节补成16位参与计算
+    if (len % 2 == 1) {
+        uint8_t *byte = (uint8_t *)(data + count);
+        sum += (*byte) << 8;  // 高字节补0
+    }
+
+    // 折叠进位
+    while (sum >> 16) {
+        sum = (sum & 0xFFFF) + (sum >> 16);
+    }
+
+    return (uint16_t)(~sum);
 }
 
 #pragma pack(1)
@@ -95,39 +116,31 @@ typedef struct peso_hdr {
 uint16_t transport_checksum(uint8_t protocol, buf_t *buf, uint8_t *src_ip, uint8_t *dst_ip) {
     uint32_t sum = 0;
 
-    // 伪首部：源IP(4) + 目的IP(4) + 保留(1 byte=0) + protocol(1) + TCP/UDP长度(2)
-    // 累加源IP
-    for (int i = 0; i < NET_IP_LEN / 2; i++) {
-        sum += (src_ip[i * 2] << 8) + src_ip[i * 2 + 1];
-    }
-    // 累加目的IP
-    for (int i = 0; i < NET_IP_LEN / 2; i++) {
-        sum += (dst_ip[i * 2] << 8) + dst_ip[i * 2 + 1];
+    // 累加源IP和目的IP，每2字节为一组，用swap16转换为主机序
+    for (int i = 0; i < NET_IP_LEN; i += 2) {
+        sum += swap16(*(uint16_t *)(src_ip + i));
+        sum += swap16(*(uint16_t *)(dst_ip + i));
     }
 
     // 协议号和TCP/UDP长度
     sum += protocol & 0xFF;
     sum += swap16(buf->len);
 
-    // 累加传输层数据（协议头 + 数据）
+    // 累加传输层数据
     uint16_t *data = (uint16_t *)buf->data;
     size_t len = buf->len;
     while (len > 1) {
-        sum += *data++;
+        sum += swap16(*data++);
         len -= 2;
     }
 
-    // 如果有剩余的单字节，补成16位处理
     if (len == 1) {
-        uint16_t last_byte = ((uint8_t *)data)[0] << 8; // 高字节填充
-        sum += last_byte;
+        sum += ((uint8_t *)data)[0] << 8; // 补高字节
     }
 
-    // 折叠高16位到低16位，直到高16位为0
     while (sum >> 16) {
         sum = (sum & 0xFFFF) + (sum >> 16);
     }
 
-    // 取反即为校验和
     return (uint16_t)(~sum);
 }
