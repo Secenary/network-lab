@@ -93,5 +93,41 @@ typedef struct peso_hdr {
  * @return uint16_t 计算得到的16位校验和
  */
 uint16_t transport_checksum(uint8_t protocol, buf_t *buf, uint8_t *src_ip, uint8_t *dst_ip) {
-    // TO-DO
+    uint32_t sum = 0;
+
+    // 伪首部：源IP(4) + 目的IP(4) + 保留(1 byte=0) + protocol(1) + TCP/UDP长度(2)
+    // 累加源IP
+    for (int i = 0; i < NET_IP_LEN / 2; i++) {
+        sum += (src_ip[i * 2] << 8) + src_ip[i * 2 + 1];
+    }
+    // 累加目的IP
+    for (int i = 0; i < NET_IP_LEN / 2; i++) {
+        sum += (dst_ip[i * 2] << 8) + dst_ip[i * 2 + 1];
+    }
+
+    // 协议号和TCP/UDP长度
+    sum += protocol & 0xFF;
+    sum += swap16(buf->len);
+
+    // 累加传输层数据（协议头 + 数据）
+    uint16_t *data = (uint16_t *)buf->data;
+    size_t len = buf->len;
+    while (len > 1) {
+        sum += *data++;
+        len -= 2;
+    }
+
+    // 如果有剩余的单字节，补成16位处理
+    if (len == 1) {
+        uint16_t last_byte = ((uint8_t *)data)[0] << 8; // 高字节填充
+        sum += last_byte;
+    }
+
+    // 折叠高16位到低16位，直到高16位为0
+    while (sum >> 16) {
+        sum = (sum & 0xFFFF) + (sum >> 16);
+    }
+
+    // 取反即为校验和
+    return (uint16_t)(~sum);
 }
