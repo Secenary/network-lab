@@ -5,6 +5,8 @@
 #include "icmp.h"
 #include "net.h"
 
+#include "config.h"
+
 /**
  * @brief 处理一个收到的数据包
  *
@@ -13,7 +15,7 @@
  */
 void ip_in(buf_t *buf, uint8_t *src_mac) {
     // Step1: 检查最小长度
-    if (buf->len < 20) return;
+    if (buf->len < IP_HDR_LEN) return;
 
     ip_hdr_t *hdr = (ip_hdr_t *)buf->data;
 
@@ -23,7 +25,7 @@ void ip_in(buf_t *buf, uint8_t *src_mac) {
     // Step3: 校验和检查
     uint16_t recv_checksum = hdr->hdr_checksum16;
     hdr->hdr_checksum16 = 0;
-    uint16_t calc_checksum = checksum16((uint16_t *)hdr, 20);
+    uint16_t calc_checksum = checksum16((uint16_t *)hdr, IP_HDR_LEN);
     if (calc_checksum != swap16(recv_checksum)) return;
     hdr->hdr_checksum16 = recv_checksum;
 
@@ -35,13 +37,13 @@ void ip_in(buf_t *buf, uint8_t *src_mac) {
     if (buf->len > total_len) buf_remove_padding(buf, buf->len - total_len);
 
     // Step6: 去除IP头部
-    buf_remove_header(buf, 20);
+    buf_remove_header(buf, IP_HDR_LEN);
 
     // Step7: 向上层传递数据包
     if (net_in(buf, hdr->protocol, hdr->src_ip) < 0) {
         // 需要重新加回头部发icmp
-        buf_add_header(buf, 20);
-        memcpy(buf->data, hdr, 20);
+        buf_add_header(buf, IP_HDR_LEN);
+        memcpy(buf->data, hdr, IP_HDR_LEN);
         icmp_unreachable(buf, hdr->src_ip, ICMP_CODE_PROTOCOL_UNREACH);
     }
 }
@@ -57,25 +59,25 @@ void ip_in(buf_t *buf, uint8_t *src_mac) {
  */
 void ip_fragment_out(buf_t *buf, uint8_t *ip, net_protocol_t protocol, int id, uint16_t offset, int mf) {
     // Step1: 添加IP头部
-    buf_add_header(buf, 20);
+    buf_add_header(buf, IP_HDR_LEN);
     ip_hdr_t *hdr = (ip_hdr_t *)buf->data;
 
     // Step2: 填写IP头部字段
     hdr->version = IP_VERSION_4;
-    hdr->hdr_len = 20 / 4;
+    hdr->hdr_len = IP_HDR_LEN / 4;
     hdr->tos = 0;
     hdr->total_len16 = swap16(buf->len);
     hdr->id16 = swap16(id);
     uint16_t flags_fragment = ((mf & 0x1) << 13) | (offset >> 3);
     hdr->flags_fragment16 = swap16(flags_fragment);
-    hdr->ttl = 64;
+    hdr->ttl = IP_DEFAULT_TTL;
     hdr->protocol = protocol;
     hdr->hdr_checksum16 = 0;
     memcpy(hdr->src_ip, net_if_ip, NET_IP_LEN);
     memcpy(hdr->dst_ip, ip, NET_IP_LEN);
 
     // Step3: 计算校验和
-    hdr->hdr_checksum16 = swap16(checksum16((uint16_t *)hdr, 20));
+    hdr->hdr_checksum16 = swap16(checksum16((uint16_t *)hdr, IP_HDR_LEN));
 
     // Step4: 调用ARP层发送
     arp_out(buf, ip);
