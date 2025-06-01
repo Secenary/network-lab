@@ -9,9 +9,8 @@
  *
  * @param buf 要处理的数据包
  */
-void ethernet_in(buf_t *buf) {
-    
-    if(buf -> len < ETHERNET_MIN_TRANSPORT_UNIT) return;
+void ethernet_in(buf_t *buf) {    
+    if(buf -> len < sizeof(ether_hdr_t *)) return;
     
     ether_hdr_t *hdr = (ether_hdr_t *)buf->data;
     uint16_t protocol = swap16(hdr->protocol16);
