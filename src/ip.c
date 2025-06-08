@@ -5,8 +5,6 @@
 #include "icmp.h"
 #include "net.h"
 
-#include "config.h"
-
 /**
  * @brief 处理一个收到的数据包
  *
@@ -92,7 +90,7 @@ void ip_fragment_out(buf_t *buf, uint8_t *ip, net_protocol_t protocol, int id, u
  */
 void ip_out(buf_t *buf, uint8_t *ip, net_protocol_t protocol) {
     static uint16_t packet_id = 0;
-    int mtu = 1500 - 20;
+    int mtu = ETHERNET_MAX_TRANSPORT_UNIT - IP_HDR_LEN;
 
     if (buf->len > mtu) {
         // 分片
