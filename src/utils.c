@@ -71,26 +71,26 @@ uint8_t ip_prefix_match(uint8_t *ipa, uint8_t *ipb) {
  */
 uint16_t checksum16(uint16_t *data, size_t len) {
     uint32_t sum = 0;
+    size_t num_words = len / 2;
 
-    // len单位是字节，校验时以16位为单位，所以要除以2
-    // 这里假设len是字节长度，所以len/2是16位数的数量
-    size_t count = len / 2;
-
-    for (size_t i = 0; i < count; i++) {
-        sum += swap16(data[i]);
+    // Step1: 按16位分组相加
+    while (num_words > 0) {
+        sum += *(data++);
+        num_words--;
     }
 
-    // 如果长度是奇数，需要把最后一个字节补成16位参与计算
-    if (len % 2 == 1) {
-        uint8_t *byte = (uint8_t *)(data + count);
-        sum += (*byte) << 8;  // 高字节补0
+    // Step2: 处理剩余8位（如果还有奇数字节）
+    if (len & 1) {
+        uint8_t *byte_ptr = (uint8_t *)data;
+        sum += (uint16_t)(*byte_ptr);
     }
 
-    // 折叠进位
+    // Step3: 循环处理高16位，直到高16位为0
     while (sum >> 16) {
         sum = (sum & 0xFFFF) + (sum >> 16);
     }
 
+    // Step4: 取反得到校验和
     return (uint16_t)(~sum);
 }
 

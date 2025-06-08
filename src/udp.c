@@ -37,7 +37,7 @@ void udp_in(buf_t *buf, uint8_t *src_ip) {
     uint16_t calc_checksum = transport_checksum(NET_PROTOCOL_UDP, buf, src_ip, net_if_ip);
     udp_hdr->checksum16 = recv_checksum;
 
-    if (calc_checksum != recv_checksum && recv_checksum) {
+    if (calc_checksum != recv_checksum) {
         // 校验和不一致，丢弃
         return;
     }
