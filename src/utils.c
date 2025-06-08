@@ -1,7 +1,7 @@
 #include "utils.h"
-
+#include "udp.h"
 #include "net.h"
-
+#include "ip.h"
 #include <stdio.h>
 #include <string.h>
 /**
@@ -114,33 +114,37 @@ typedef struct peso_hdr {
  * @return uint16_t 计算得到的16位校验和
  */
 uint16_t transport_checksum(uint8_t protocol, buf_t *buf, uint8_t *src_ip, uint8_t *dst_ip) {
-    uint32_t sum = 0;
+    buf_add_header(buf, sizeof(ip_hdr_t));
 
-    // 累加源IP和目的IP，每2字节为一组，用swap16转换为主机序
-    for (int i = 0; i < NET_IP_LEN; i += 2) {
-        sum += swap16(*(uint16_t *)(src_ip + i));
-        sum += swap16(*(uint16_t *)(dst_ip + i));
+    // 暂存IP首部
+    ip_hdr_t ip_hdr;
+    memcpy(&ip_hdr, buf->data, sizeof(ip_hdr_t));
+    buf_remove_header(buf, sizeof(ip_hdr_t) - sizeof(peso_hdr_t));
+
+    // 填充伪首部
+    peso_hdr_t udp_peso_hdr;
+    memcpy(udp_peso_hdr.src_ip, src_ip, NET_IP_LEN);
+    memcpy(udp_peso_hdr.dst_ip, dst_ip, NET_IP_LEN);
+    udp_peso_hdr.placeholder = 0;
+    udp_peso_hdr.protocol = protocol;
+    udp_peso_hdr.total_len16 = swap16(buf->len - sizeof(peso_hdr_t));
+    memcpy(buf->data, &udp_peso_hdr, sizeof(peso_hdr_t));
+
+    int paddled = 0;
+    if(buf->len % 2) {
+        buf_add_padding(buf, 1);
+        paddled = 1;
     }
 
-    // 协议号和TCP/UDP长度
-    sum += protocol & 0xFF;
-    sum += swap16(buf->len);
+    // 计算校验和
+    uint16_t checksum = checksum16((uint16_t *)buf->data, buf->len);
 
-    // 累加传输层数据
-    uint16_t *data = (uint16_t *)buf->data;
-    size_t len = buf->len;
-    while (len > 1) {
-        sum += swap16(*data++);
-        len -= 2;
-    }
+    // 恢复IP数据
+    buf_add_header(buf, sizeof(udp_hdr_t));
+    memcpy(buf->data, &ip_hdr, sizeof(ip_hdr_t));
+    buf_remove_header(buf, sizeof(ip_hdr_t));
+    
+    if(paddled) buf_remove_padding(buf, 1);
 
-    if (len == 1) {
-        sum += ((uint8_t *)data)[0] << 8; // 补高字节
-    }
-
-    while (sum >> 16) {
-        sum = (sum & 0xFFFF) + (sum >> 16);
-    }
-
-    return (uint16_t)(~sum);
+    return checksum;
 }
