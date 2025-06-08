@@ -140,7 +140,7 @@ uint16_t transport_checksum(uint8_t protocol, buf_t *buf, uint8_t *src_ip, uint8
     uint16_t checksum = checksum16((uint16_t *)buf->data, buf->len);
 
     // 恢复IP数据
-    buf_add_header(buf, sizeof(udp_hdr_t));
+    buf_add_header(buf, sizeof(ip_hdr_t) - sizeof(peso_hdr_t));
     memcpy(buf->data, &ip_hdr, sizeof(ip_hdr_t));
     buf_remove_header(buf, sizeof(ip_hdr_t));
     

@@ -53,8 +53,7 @@ void ip_in(buf_t *buf, uint8_t *src_mac) {
     buf_remove_header(buf, ip_hdr_len);
 
     // Step7: 向上层传递数据包
-    int result = net_in(buf, ip_hdr->protocol, ip_hdr->src_ip);
-    if (result == -1) {
+    if (net_in(buf, ip_hdr->protocol, ip_hdr->src_ip) < 0) {
         // 协议无法识别，发送 ICMP 协议不可达
         icmp_unreachable(buf, ip_hdr->src_ip, ICMP_CODE_PROTOCOL_UNREACH);
     }
