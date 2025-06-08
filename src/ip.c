@@ -78,7 +78,7 @@ void ip_fragment_out(buf_t *buf, uint8_t *ip, net_protocol_t protocol, int id, u
     ip_hdr_t *ip_hdr = (ip_hdr_t *)buf->data;
 
     ip_hdr->version = IP_VERSION_4;
-    ip_hdr->hdr_len = IP_HDR_LEN / 4;  // 单位是 4 字节
+    ip_hdr->hdr_len = IP_HDR_LEN / IP_HDR_LEN_PER_BYTE;  // 单位是 4 字节
     ip_hdr->tos = 0;                           // 服务类型暂设为0
     ip_hdr->total_len16 = swap16(buf->len);    // 使用 swap16 替代 htons
     ip_hdr->id16 = swap16(id);                 // 使用 swap16 替代 htons
