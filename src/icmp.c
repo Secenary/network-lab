@@ -66,7 +66,7 @@ void icmp_unreachable(buf_t *recv_buf, uint8_t *src_ip, icmp_code_t code) {
     memcpy(txbuf.data + 8, recv_buf->data, data_len);
 
     // Step3: 计算校验和
-    hdr->checksum16 = swap16(checksum16((uint16_t *)txbuf.data, txbuf.len));
+    hdr->checksum16 = checksum16((uint16_t *)txbuf.data, txbuf.len);
 
     // Step4: 发送
     ip_out(&txbuf, src_ip, NET_PROTOCOL_ICMP);
