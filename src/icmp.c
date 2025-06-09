@@ -16,10 +16,10 @@ static void icmp_resp(buf_t *req_buf, uint8_t *src_ip) {
 
     // Step2: 修改ICMP类型为Echo Reply（0），并计算校验和
     icmp_hdr_t *hdr = (icmp_hdr_t *)txbuf.data;
-    hdr->type = 0;
+    hdr->type = ICMP_TYPE_ECHO_REPLY;
     hdr->code = 0;
     hdr->checksum16 = 0;
-    hdr->checksum16 = swap16(checksum16((uint16_t *)txbuf.data, txbuf.len));
+    hdr->checksum16 = checksum16((uint16_t *)txbuf.data, txbuf.len);
 
     // Step3: 发送数据报
     ip_out(&txbuf, src_ip, NET_PROTOCOL_ICMP);
