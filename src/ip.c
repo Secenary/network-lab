@@ -86,7 +86,7 @@ void ip_fragment_out(buf_t *buf, uint8_t *ip, net_protocol_t protocol, int id, u
     ip_hdr->ttl = 64;                          // 默认 TTL
     ip_hdr->protocol = protocol;               // 上层协议类型
     memcpy(ip_hdr->src_ip, net_if_ip, NET_IP_LEN);  // 源IP地址
-    memcpy(ip_hdr->dst_ip, ip, NET_IP_LEN);        // 目的IP地址
+    memcpy(ip_hdr->dst_ip, ip, NET_IP_LEN);        // 目的IP地
 
     // Step3: 计算并填写校验和
     ip_hdr->hdr_checksum16 = 0;

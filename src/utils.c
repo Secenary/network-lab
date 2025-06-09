@@ -131,7 +131,7 @@ uint16_t transport_checksum(uint8_t protocol, buf_t *buf, uint8_t *src_ip, uint8
     memcpy(buf->data, &udp_peso_hdr, sizeof(peso_hdr_t));
 
     int paddled = 0;
-    if(buf->len % 2) {
+    if(buf->len & 1) {
         buf_add_padding(buf, 1);
         paddled = 1;
     }

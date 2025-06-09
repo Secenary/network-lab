@@ -10,7 +10,7 @@
  * @param src_ip 源ip地址
  */
 static void icmp_resp(buf_t *req_buf, uint8_t *src_ip) {
-     // Step1: 初始化并封装数据
+    // Step1: 初始化并封装数据
     buf_init(&txbuf, req_buf->len);
     memcpy(txbuf.data, req_buf->data, req_buf->len);
 
@@ -37,7 +37,7 @@ void icmp_in(buf_t *buf, uint8_t *src_ip) {
 
     // Step2: 查看ICMP类型是否为Echo Request
     icmp_hdr_t *hdr = (icmp_hdr_t *)buf->data;
-    if (hdr->type == 8) { // Echo Request
+    if (hdr->type == ICMP_TYPE_ECHO_REQUEST) { // Echo Request
         // Step3: 回复Echo Reply
         icmp_resp(buf, src_ip);
     }
