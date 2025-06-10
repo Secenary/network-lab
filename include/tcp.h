@@ -71,4 +71,7 @@ void tcp_close(uint16_t port);
 void tcp_in(buf_t *buf, uint8_t *src_ip);
 void tcp_out(tcp_conn_t *tcp_conn, buf_t *buf, uint16_t src_port, uint8_t *dst_ip, uint16_t dst_port, uint8_t flags);
 void tcp_send(tcp_conn_t *tcp_conn, uint8_t *data, uint16_t len, uint16_t src_port, uint8_t *dst_ip, uint16_t dst_port);
+
+void tcp_close_connection(uint8_t remote_ip[NET_IP_LEN], uint16_t remote_port, uint16_t host_port);
+tcp_conn_t* tcp_get_connection(uint8_t remote_ip[NET_IP_LEN], uint16_t remote_port, uint16_t host_port, uint8_t create_if_missing);
 #endif

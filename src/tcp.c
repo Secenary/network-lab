@@ -77,7 +77,7 @@ static inline tcp_key_t generate_tcp_key(uint8_t remote_ip[NET_IP_LEN], uint16_t
  *
  * @return tcp_conn_t* 指向已存在或新创建的 TCP 连接的指针；若未找到且无需创建，则返回 NULL
  */
-static inline tcp_conn_t *tcp_get_connection(uint8_t remote_ip[NET_IP_LEN], uint16_t remote_port, uint16_t host_port, uint8_t create_if_missing) {
+tcp_conn_t *tcp_get_connection(uint8_t remote_ip[NET_IP_LEN], uint16_t remote_port, uint16_t host_port, uint8_t create_if_missing) {
     tcp_key_t key = generate_tcp_key(remote_ip, remote_port, host_port);
     tcp_conn_t *tcp_conn = map_get(&tcp_conn_table, &key);
     if (!tcp_conn && create_if_missing) {
@@ -96,7 +96,7 @@ static inline tcp_conn_t *tcp_get_connection(uint8_t remote_ip[NET_IP_LEN], uint
  * @param remote_port
  * @param host_port
  */
-static inline void tcp_close_connection(uint8_t remote_ip[NET_IP_LEN], uint16_t remote_port, uint16_t host_port) {
+void tcp_close_connection(uint8_t remote_ip[NET_IP_LEN], uint16_t remote_port, uint16_t host_port) {
     tcp_key_t key = generate_tcp_key(remote_ip, remote_port, host_port);
     map_delete(&tcp_conn_table, &key);
 }
