@@ -52,11 +52,11 @@ void icmp_in(buf_t *buf, uint8_t *src_ip) {
  */
 void icmp_unreachable(buf_t *recv_buf, uint8_t *src_ip, icmp_code_t code) {
     // Step1: 初始化并填写ICMP首部（8字节）+ 原始IP头部和前8字节数据
-    size_t data_len = 20 + 8;
+    size_t data_len = IP_HDR_LEN + 8;
     buf_init(&txbuf, 8 + data_len);
 
     icmp_hdr_t *hdr = (icmp_hdr_t *)txbuf.data;
-    hdr->type = 3;  // Destination Unreachable
+    hdr->type = ICMP_CODE_PORT_UNREACH;  // Destination Unreachable
     hdr->code = code;
     hdr->checksum16 = 0;
     hdr->id16 = 0;
@@ -70,7 +70,6 @@ void icmp_unreachable(buf_t *recv_buf, uint8_t *src_ip, icmp_code_t code) {
 
     // Step4: 发送
     ip_out(&txbuf, src_ip, NET_PROTOCOL_ICMP);
-
 }
 
 /**
