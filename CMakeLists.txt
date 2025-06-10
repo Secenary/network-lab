@@ -3,7 +3,7 @@ project(net VERSION 0.1.0)
 
 # Add extra source files here if any
 set(EXTRA_FILE 
-    
+
 )
 
 if(WIN32)
@@ -40,6 +40,14 @@ add_executable(web_server
 )
 target_link_libraries(web_server ${PCAP})
 target_compile_definitions(web_server PUBLIC HTTP_RESOURCE_DIR="${HTTP_RESOURCE_DIR}" ICMP TCP)
+
+add_executable(ftp_server
+    ${DIR_SRCS}
+    ./app/ftp_server.c
+    ./src/tcp.c
+)
+target_link_libraries(ftp_server ${PCAP})
+target_compile_definitions(ftp_server PUBLIC HTTP_RESOURCE_DIR="${HTTP_RESOURCE_DIR}" ICMP TCP)
 
 set(TEST_FIX_SOURCE 
     testing/faker/driver.c 
